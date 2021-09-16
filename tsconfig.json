@@ -30,8 +30,10 @@
     "listFiles": false
     /* Print names of files part of the compilation. */,
     "pretty": true,
-
-    "types": ["jest", "node"]
+    "types": [
+      "jest",
+      "node"
+    ]
   },
   "include": [
     "src/**/*"
