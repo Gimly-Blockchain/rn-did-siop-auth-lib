@@ -1,43 +1,53 @@
 {
   "name": "didsiop-auth",
-  "version": "0.1.0",
+  "version": "0.0.1",
   "private": true,
-  "dependencies": {
-    "@testing-library/jest-dom": "^5.11.4",
-    "@testing-library/react": "^11.1.0",
-    "@testing-library/user-event": "^12.1.10",
-    "@types/jest": "^26.0.15",
-    "@types/node": "^12.0.0",
-    "@types/react": "^17.0.0",
-    "@types/react-dom": "^17.0.0",
-    "react": "^17.0.2",
-    "react-dom": "^17.0.2",
-    "react-scripts": "4.0.3",
-    "typescript": "^4.1.2",
-    "web-vitals": "^1.0.1"
-  },
+  "main": "dist/index.js",
+  "typings": "dist/index.d.ts",
+  "license": "Apache-2.0",
+  "author": "Sphereon",
   "scripts": {
-    "start": "react-scripts start",
-    "build": "react-scripts build",
-    "test": "react-scripts test",
-    "eject": "react-scripts eject"
+    "build": "tsc -p tsconfig.json",
+    "test": "run-s build test:* cov",
+    "test:lint": "eslint . --ext .ts",
+    "test:prettier": "prettier \"{src, test}/**/*.(ts|tsx)\" --list-different",
+    "test:unit": "jest",
+    "cov": "jest --coverage",
+    "fix": "run-s fix:*",
+    "fix:prettier": "prettier \"{src, test}/**/*.(ts|tsx)\" --write",
+    "fix:lint": "eslint --ext .ts --fix"
   },
-  "eslintConfig": {
-    "extends": [
-      "react-app",
-      "react-app/jest"
-    ]
+  "devDependencies": {
+    "@babel/core": "^7.15.5",
+    "@testing-library/jest-native": "^4.0.2",
+    "@testing-library/react-native": "^7.2.0",
+    "@types/jest": "^27.0.1",
+    "@typescript-eslint/eslint-plugin": "^4.31.1",
+    "@typescript-eslint/parser": "^4.31.1",
+    "eslint": "^7.32.0",
+    "eslint-config-prettier": "^8.3.0",
+    "eslint-plugin-eslint-comments": "^3.2.0",
+    "eslint-plugin-import": "^2.24.2",
+    "npm-run-all": "^4.1.5",
+    "prettier": "^2.4.0",
+    "typescript": "^4.4.3",
+    "jest": "^27.0.6",
+    "ts-jest": "^27.0.4",
+    "react-native": "^0.65.1",
+    "react-test-renderer": "^17.0.2",
+    "react": "^17.0.2"
   },
-  "browserslist": {
-    "production": [
-      ">0.2%",
-      "not dead",
-      "not op_mini all"
-    ],
-    "development": [
-      "last 1 chrome version",
-      "last 1 firefox version",
-      "last 1 safari version"
-    ]
+  "files": [
+    "/dist",
+    "LICENSE",
+    "README.md"
+  ],
+  "peerDependencies": {
+    "react": "^17.0.2",
+    "react-native": "^0.65.1"
+  },
+  "prettier": {
+    "singleQuote": true,
+    "printWidth": 120
   }
 }
