@@ -9,7 +9,7 @@ import {
 import axios from "axios"
 import '../shim'
 
-
+// TODO Add configuration method for the DID & private key
 const HEX_KEY = "c848751f600a9b8b91e3db840d75be2304b0ec4b9b15fe77d87d3eed9a007d1a";
 const DID = "did:ethr:0x8D0E24509b79AfaB3A74Be1700ebF9769796B489";
 
