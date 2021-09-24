@@ -3,10 +3,9 @@
     "allowJs": true,
     "module": "commonjs",
     "isolatedModules": true,
-    "noEmit": true,
     "target": "es2020",
     "declaration": true,
-    "outDir": "./dist",
+    "outDir": "dist",
     "jsx": "react",
     "esModuleInterop": true,
     /* Enables emit interoperability between CommonJS and ES Modules via creation of namespace objects for all imports. Implies 'allowSyntheticDefaultImports'. */
@@ -31,7 +30,6 @@
     /* Print names of files part of the compilation. */,
     "pretty": true,
     "types": [
-      "jest",
       "node"
     ]
   },
