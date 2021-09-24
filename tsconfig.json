@@ -3,7 +3,6 @@
     "allowJs": true,
     "module": "commonjs",
     "isolatedModules": true,
-    "noEmit": true,
     "target": "es2020",
     "declaration": true,
     "outDir": "./dist",
