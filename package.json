@@ -1,6 +1,6 @@
 {
   "name": "@sphereon/rn-did-siop-auth-lib",
-  "version": "0.0.9",
+  "version": "0.0.1",
   "private": false,
   "main": "dist/index.js",
   "typings": "dist/index.d.ts",
@@ -18,7 +18,7 @@
     "fix:lint": "eslint --ext .ts --fix"
   },
   "dependencies": {
-    "@sphereon/did-auth-siop": "^0.0.1",
+    "@sphereon/did-auth-siop": "0.0.1-temp-sp1",
     "@tradle/react-native-http": "^2.0.0",
     "assert": "^1.1.1",
     "browserify-zlib": "^0.1.4",
