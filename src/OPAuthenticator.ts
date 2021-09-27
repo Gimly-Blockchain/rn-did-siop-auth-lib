@@ -71,7 +71,33 @@ export default class OPAuthenticator {
     }
 
 
-    public async sendAuthResponse(op: OP, requestJwt: string, redirectURI: string): Promise<void> {
+    public async sendAuthResponse(requestJwt: string, redirectURI: string, nonce: string): Promise<void> {
+        const responseOpts: AuthenticationResponseOpts = {
+            signatureType: {
+                hexPrivateKey: this.opPrivateKey,
+                did: this.opDID
+            },
+            registration: {
+                registrationBy: {
+                    type: PassBy.VALUE,
+                },
+            },
+            responseMode: ResponseMode.POST,
+            did: this.opDID,
+            expiresIn: 2000
+        };
+
+        const verifyOpts: VerifyAuthenticationRequestOpts = {
+            verification: {
+                mode: VerificationMode.INTERNAL,
+                resolveOpts: {
+                    didMethods: ["ethr"]
+                }
+            },
+            nonce: nonce
+        }
+
+        const op = OP.fromOpts(responseOpts, verifyOpts);
         const authResponse = await op.createAuthenticationResponse(requestJwt)
         const siopSessionResponse = await axios.post(redirectURI, authResponse)
         if (siopSessionResponse.status == 200) {
