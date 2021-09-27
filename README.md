@@ -7,7 +7,11 @@
 
 [![CI](https://github.com/Sphereon/didsiop-auth/actions/workflows/main.yml/badge.svg)](https://github.com/Sphereon/didsiop-auth/actions/workflows/main.yml)
 
-## Testing the changes
+## Purpose
+
+This repository is meant to be used as a template for react-native component library 
+
+## Testing the implementation
 
 npm:
 
