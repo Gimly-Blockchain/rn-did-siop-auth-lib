@@ -6,6 +6,7 @@
     "target": "es2020",
     "declaration": true,
     "outDir": "dist",
+    "rootDir": "src",
     "jsx": "react",
     "esModuleInterop": true,
     /* Enables emit interoperability between CommonJS and ES Modules via creation of namespace objects for all imports. Implies 'allowSyntheticDefaultImports'. */
@@ -34,7 +35,7 @@
     ]
   },
   "include": [
-    "src/**/*"
+    "src/**/*",
   ],
   "exclude": [
     "node_modules/**"

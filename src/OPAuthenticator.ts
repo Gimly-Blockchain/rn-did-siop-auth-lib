@@ -7,7 +7,7 @@ import {
   VerifyAuthenticationRequestOpts
 } from "@sphereon/did-auth-siop/dist/main/types/SIOP.types";
 import axios from "axios"
-import '../shim'
+import './shim'
 
 // TODO Add configuration method for the DID & private key
 const HEX_KEY = "c848751f600a9b8b91e3db840d75be2304b0ec4b9b15fe77d87d3eed9a007d1a";
@@ -59,7 +59,7 @@ export default class OPAuthenticator {
 
     const op = OP.fromOpts(responseOpts, verifyOpts);
     const jwt = requestURI.request;
-    await op.verifyAuthenticationRequest(jwt, {audience: DID});
+    await op.verifyAuthenticationRequest(jwt, {});
     await this.sendAuthResponse(op, jwt, requestURI);
     return
   }
