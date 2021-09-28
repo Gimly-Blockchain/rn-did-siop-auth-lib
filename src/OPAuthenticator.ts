@@ -1,8 +1,9 @@
+// noinspection JSUnusedGlobalSymbols
+
 import {OP} from "@sphereon/did-auth-siop/dist/main"
 import {
-  AuthenticationResponseOpts,
+  ParsedAuthenticationRequestURI,
   PassBy,
-  ResponseMode,
   VerificationMode,
   VerifyAuthenticationRequestOpts
 } from "@sphereon/did-auth-siop/dist/main/types/SIOP.types"
@@ -12,30 +13,31 @@ import axios from "axios"
 import './shim'
 import {DIDResolutionResult} from "did-resolver"
 
-import {AuthenticationRequestURI, RPPresentation} from "./types/types"
+import {RPPresentation} from "./types/types"
 
 
 export default class OPAuthenticator {
 
-  private opDID: string
-  private opPrivateKey: string
+  private op: OP
 
 
   constructor(opDID: string, opPrivateKey: string) {
-    this.opDID = opDID
-    this.opPrivateKey = opPrivateKey
+    this.op = OP.builder()
+        .withExpiresIn(6000)
+        .addDidMethod("ethr")
+        .internalSignature(opPrivateKey, opDID, `${opDID}#controller`)
+        .registrationBy(PassBy.VALUE)
+        .build()
   }
 
-// noinspection JSUnusedGlobalSymbols
-  public async getRequestUrl(redirectUrl: string, state: string): Promise<AuthenticationRequestURI> {
+  public async getRequestUrl(redirectUrl: string, state: string): Promise<ParsedAuthenticationRequestURI> {
     const getRequestUrl = redirectUrl + "?stateId=" + state
     console.log("getRequestUrl", getRequestUrl)
     try {
       const response = await axios.get(getRequestUrl)
       console.log("response.status", response.status)
       if (response.status == 200) {
-        const uriDecoded = decodeURIComponent(response.data as string)
-        return OPAuthenticator.objectFromURI(uriDecoded)
+        return this.op.parseAuthenticationRequestURI(response.data as string)
       } else {
         return Promise.reject("Could not fetch the request URL: " + response.statusText || response.data)
       }
@@ -44,35 +46,18 @@ export default class OPAuthenticator {
     }
   }
 
-  public async verifyAuthenticationRequestURI(requestURI: AuthenticationRequestURI): Promise<RPPresentation> {
-    const responseOpts: AuthenticationResponseOpts = {
-      signatureType: {
-        hexPrivateKey: this.opPrivateKey,
-        did: this.opDID
-      },
-      registration: {
-        registrationBy: {
-          type: PassBy.VALUE,
-        },
-      },
-      responseMode: ResponseMode.POST,
-      did: this.opDID,
-      expiresIn: 2000
-    }
-
-    const verifyOpts: VerifyAuthenticationRequestOpts = {
+  public async verifyAuthenticationRequestURI(requestURI: ParsedAuthenticationRequestURI): Promise<RPPresentation> {
+    const options: VerifyAuthenticationRequestOpts = {
       verification: {
         mode: VerificationMode.INTERNAL,
         resolveOpts: {
           didMethods: ["ethr"]
         }
       },
-      nonce: requestURI.nonce
+      nonce: requestURI.requestPayload.nonce
     }
 
-    const op = OP.fromOpts(responseOpts, verifyOpts)
-    const jwt = requestURI.request
-    const verifiedAuthenticationRequestWithJWT = await op.verifyAuthenticationRequest(jwt, {})
+    const verifiedAuthenticationRequestWithJWT = await this.op.verifyAuthenticationRequest(requestURI.jwt, options)
     return this.rpPresentationFromDidResolutionResult(verifiedAuthenticationRequestWithJWT.didResolutionResult)
   }
 
@@ -84,36 +69,20 @@ export default class OPAuthenticator {
   }
 
 
-  public async sendAuthResponse(requestURI: AuthenticationRequestURI): Promise<void> {
-    const responseOpts: AuthenticationResponseOpts = {
-      signatureType: {
-        hexPrivateKey: this.opPrivateKey,
-        did: this.opDID
-      },
-      registration: {
-        registrationBy: {
-          type: PassBy.VALUE,
-        },
-      },
-      responseMode: ResponseMode.POST,
-      did: this.opDID,
-      expiresIn: 2000
-    }
-
-    const verifyOpts: VerifyAuthenticationRequestOpts = {
+  public async sendAuthResponse(requestURI: ParsedAuthenticationRequestURI): Promise<void> {
+    const options: VerifyAuthenticationRequestOpts = {
       verification: {
         mode: VerificationMode.INTERNAL,
         resolveOpts: {
           didMethods: ["ethr"]
         }
       },
-      nonce: requestURI.nonce
+      nonce: requestURI.requestPayload.nonce
     }
 
     try {
-      const op = OP.fromOpts(responseOpts, verifyOpts)
-      const authResponse = await op.createAuthenticationResponse(requestURI.request)
-      const siopSessionResponse = await axios.post(requestURI.redirect_uri, authResponse)
+      const authResponse = await this.op.createAuthenticationResponse(requestURI.jwt, options)
+      const siopSessionResponse = await axios.post(requestURI.requestPayload.redirect_uri, authResponse)
       if (siopSessionResponse.status == 200) {
         return
       } else {
@@ -122,9 +91,5 @@ export default class OPAuthenticator {
     } catch (e) {
       return Promise.reject(e.message)
     }
-  }
-
-  private static objectFromURI(uriDecoded: string): AuthenticationRequestURI {
-    return JSON.parse('{"' + uriDecoded.replace(/"/g, '\\"').replace(/&/g, '","').replace(/=/g, '":"') + '"}')
   }
 }
