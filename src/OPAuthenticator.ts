@@ -5,13 +5,13 @@ import {
   ParsedAuthenticationRequestURI,
   PassBy,
   VerificationMode,
+  VerifiedAuthenticationRequestWithJWT,
   VerifyAuthenticationRequestOpts
 } from "@sphereon/did-auth-siop/dist/main/types/SIOP.types"
 // eslint-disable-next-line import/order
 import axios from "axios"
 
 import './shim'
-import {DIDResolutionResult} from "did-resolver"
 
 import {RPPresentation} from "./types/types"
 
@@ -30,6 +30,7 @@ export default class OPAuthenticator {
         .build()
   }
 
+  /* Get the authentication request URL from the RP */
   public async getRequestUrl(redirectUrl: string, state: string): Promise<ParsedAuthenticationRequestURI> {
     const getRequestUrl = redirectUrl + "?stateId=" + state
     console.log("getRequestUrl", getRequestUrl)
@@ -46,7 +47,8 @@ export default class OPAuthenticator {
     }
   }
 
-  public async verifyAuthenticationRequestURI(requestURI: ParsedAuthenticationRequestURI): Promise<RPPresentation> {
+  /* Verify the integrity of the authentication request */
+  public async verifyAuthenticationRequestURI(requestURI: ParsedAuthenticationRequestURI): Promise<VerifiedAuthenticationRequestWithJWT> {
     const options: VerifyAuthenticationRequestOpts = {
       verification: {
         mode: VerificationMode.INTERNAL,
@@ -57,32 +59,23 @@ export default class OPAuthenticator {
       nonce: requestURI.requestPayload.nonce
     }
 
-    const verifiedAuthenticationRequestWithJWT = await this.op.verifyAuthenticationRequest(requestURI.jwt, options)
-    return this.rpPresentationFromDidResolutionResult(verifiedAuthenticationRequestWithJWT.didResolutionResult)
+    return await this.op.verifyAuthenticationRequest(requestURI.jwt, options)
   }
 
-
-  private rpPresentationFromDidResolutionResult(didResolutionResult: DIDResolutionResult): RPPresentation {
+  /* Format the DID presentation */
+  public rpPresentationFromDidResolutionResult(verifiedAuthenticationRequest: VerifiedAuthenticationRequestWithJWT): RPPresentation {
+    const didResolutionResult = verifiedAuthenticationRequest.didResolutionResult
     const rpPresentation: RPPresentation = new RPPresentation()
     rpPresentation.did = didResolutionResult.didDocument.id
     return rpPresentation
   }
 
 
-  public async sendAuthResponse(requestURI: ParsedAuthenticationRequestURI): Promise<void> {
-    const options: VerifyAuthenticationRequestOpts = {
-      verification: {
-        mode: VerificationMode.INTERNAL,
-        resolveOpts: {
-          didMethods: ["ethr"]
-        }
-      },
-      nonce: requestURI.requestPayload.nonce
-    }
-
+  /* Send the authentication response back to the RP */
+  public async sendAuthResponse(verifiedAuthenticationRequest: VerifiedAuthenticationRequestWithJWT): Promise<void> {
     try {
-      const authResponse = await this.op.createAuthenticationResponse(requestURI.jwt, options)
-      const siopSessionResponse = await axios.post(requestURI.requestPayload.redirect_uri, authResponse)
+      const authResponse = await this.op.createAuthenticationResponseFromVerifiedRequest(verifiedAuthenticationRequest)
+      const siopSessionResponse = await axios.post(authResponse.payload.aud, authResponse)
       if (siopSessionResponse.status == 200) {
         return
       } else {

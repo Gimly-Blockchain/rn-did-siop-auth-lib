@@ -5,49 +5,12 @@
   <br>
 </h1>
 
-[![CI](https://github.com/Sphereon/didsiop-auth/actions/workflows/main.yml/badge.svg)](https://github.com/Sphereon/didsiop-auth/actions/workflows/main.yml)
+This library contains an OP Authenticator implementation that can be used in React Native projects.
 
-## Testing the changes
+Demo project [rn-did-siop-example-app}(https://github.com/Sphereon-OpenSource/rn-did-siop-example-app) implements this library.
 
-npm:
+### To build
 
-```bash
-npm run test
-```
-
-yarn:
-
-```bash
-yarn test
-```
-
-## Publishing and using the package
-
-After the changes are done publish the package, running the following command from the root folder of the project
-
-npm:
-
-```bash
-npm publish
-```
-
-yarn:
-
-```bash
-yarn publish
-```
-
-and import it in your react-native project using
-
-npm:
-
-```bash
-npm i didsiop-auth
-```
-
-or yarn:
-
-```bash
-yarn add didsiop-auth
-```
-
+- yarn install
+- yarn build
+- yarn publish (in case you want to publish the project to a private registry.)
