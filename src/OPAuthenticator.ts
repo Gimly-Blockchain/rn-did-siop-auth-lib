@@ -1,113 +1,130 @@
-import {OP} from "@sphereon/did-auth-siop/dist/main";
-import {VerifiedAuthenticationRequestWithJWT} from "@sphereon/did-auth-siop/dist/main/types/SIOP.types";
-
+import {OP} from "@sphereon/did-auth-siop/dist/main"
 import {
-    AuthenticationResponseOpts,
-    PassBy,
-    ResponseMode,
-    VerificationMode,
-    VerifyAuthenticationRequestOpts
-} from "@sphereon/did-auth-siop/dist/main/types/SIOP.types";
+  AuthenticationResponseOpts,
+  PassBy,
+  ResponseMode,
+  VerificationMode,
+  VerifyAuthenticationRequestOpts
+} from "@sphereon/did-auth-siop/dist/main/types/SIOP.types"
+// eslint-disable-next-line import/order
 import axios from "axios"
-import './shim'
 
-//const HEX_KEY = "c848751f600a9b8b91e3db840d75be2304b0ec4b9b15fe77d87d3eed9a007d1a";
-//const DID = "did:ethr:0x8D0E24509b79AfaB3A74Be1700ebF9769796B489";
+import './shim'
+import {DIDResolutionResult} from "did-resolver"
+
+import {AuthenticationRequestURI, RPPresentation} from "./types/types"
+
 
 export default class OPAuthenticator {
 
-    private opDID: string;
-    private opPrivateKey: string;
+  private opDID: string
+  private opPrivateKey: string
 
 
-    constructor(opDID: string, opPrivateKey: string) {
-        this.opDID = opDID
-        this.opPrivateKey = opPrivateKey
-    }
+  constructor(opDID: string, opPrivateKey: string) {
+    this.opDID = opDID
+    this.opPrivateKey = opPrivateKey
+  }
 
 // noinspection JSUnusedGlobalSymbols
-    public async getRequestUrl(redirectUrl: string, state: string): Promise<string> {
-        const getRequestUrl = redirectUrl + "?stateId=" + state;
-        console.log("getRequestUrl", getRequestUrl);
-        const response = await axios.get(getRequestUrl)
-        console.log("response.status", response.status);
-        if (response.status == 200) {
-            const uriDecoded = decodeURIComponent(response.data as string);
-            return OPAuthenticator.objectFromURI(uriDecoded)
-        } else {
-            throw new Error("Could not fetch the request URL: " + response.statusText || response.data)
-        }
+  public async getRequestUrl(redirectUrl: string, state: string): Promise<AuthenticationRequestURI> {
+    const getRequestUrl = redirectUrl + "?stateId=" + state
+    console.log("getRequestUrl", getRequestUrl)
+    try {
+      const response = await axios.get(getRequestUrl)
+      console.log("response.status", response.status)
+      if (response.status == 200) {
+        const uriDecoded = decodeURIComponent(response.data as string)
+        return OPAuthenticator.objectFromURI(uriDecoded)
+      } else {
+        return Promise.reject("Could not fetch the request URL: " + response.statusText || response.data)
+      }
+    } catch (e) {
+      return Promise.reject(e.message)
+    }
+  }
+
+  public async verifyAuthenticationRequestURI(requestURI: AuthenticationRequestURI): Promise<RPPresentation> {
+    const responseOpts: AuthenticationResponseOpts = {
+      signatureType: {
+        hexPrivateKey: this.opPrivateKey,
+        did: this.opDID
+      },
+      registration: {
+        registrationBy: {
+          type: PassBy.VALUE,
+        },
+      },
+      responseMode: ResponseMode.POST,
+      did: this.opDID,
+      expiresIn: 2000
     }
 
-    public async verifyAuthenticationRequestURI(requestURI: any): Promise<VerifiedAuthenticationRequestWithJWT> {
-        const responseOpts: AuthenticationResponseOpts = {
-            signatureType: {
-                hexPrivateKey: this.opPrivateKey,
-                did: this.opDID
-            },
-            registration: {
-                registrationBy: {
-                    type: PassBy.VALUE,
-                },
-            },
-            responseMode: ResponseMode.POST,
-            did: this.opDID,
-            expiresIn: 2000
-        };
-
-        const verifyOpts: VerifyAuthenticationRequestOpts = {
-            verification: {
-                mode: VerificationMode.INTERNAL,
-                resolveOpts: {
-                    didMethods: ["ethr"]
-                }
-            },
-            nonce: requestURI.nonce
+    const verifyOpts: VerifyAuthenticationRequestOpts = {
+      verification: {
+        mode: VerificationMode.INTERNAL,
+        resolveOpts: {
+          didMethods: ["ethr"]
         }
-
-        const op = OP.fromOpts(responseOpts, verifyOpts);
-        const jwt = requestURI.request;
-        return await op.verifyAuthenticationRequest(jwt, {});
+      },
+      nonce: requestURI.nonce
     }
 
+    const op = OP.fromOpts(responseOpts, verifyOpts)
+    const jwt = requestURI.request
+    const verifiedAuthenticationRequestWithJWT = await op.verifyAuthenticationRequest(jwt, {})
+    return this.rpPresentationFromDidResolutionResult(verifiedAuthenticationRequestWithJWT.didResolutionResult)
+  }
 
-    public async sendAuthResponse(requestJwt: string, redirectURI: string, nonce: string): Promise<void> {
-        const responseOpts: AuthenticationResponseOpts = {
-            signatureType: {
-                hexPrivateKey: this.opPrivateKey,
-                did: this.opDID
-            },
-            registration: {
-                registrationBy: {
-                    type: PassBy.VALUE,
-                },
-            },
-            responseMode: ResponseMode.POST,
-            did: this.opDID,
-            expiresIn: 2000
-        };
 
-        const verifyOpts: VerifyAuthenticationRequestOpts = {
-            verification: {
-                mode: VerificationMode.INTERNAL,
-                resolveOpts: {
-                    didMethods: ["ethr"]
-                }
-            },
-            nonce: nonce
-        }
+  private rpPresentationFromDidResolutionResult(didResolutionResult: DIDResolutionResult): RPPresentation {
+    const rpPresentation: RPPresentation = new RPPresentation()
+    rpPresentation.did = didResolutionResult.didDocument.id
+    return rpPresentation
+  }
 
-        const op = OP.fromOpts(responseOpts, verifyOpts);
-        const authResponse = await op.createAuthenticationResponse(requestJwt)
-        const siopSessionResponse = await axios.post(redirectURI, authResponse)
-        if (siopSessionResponse.status == 200) {
-            return
-        } else {
-            throw new Error(`Error ${siopSessionResponse.status}: ${siopSessionResponse.statusText}`)
-        }
+
+  public async sendAuthResponse(requestURI: AuthenticationRequestURI): Promise<void> {
+    const responseOpts: AuthenticationResponseOpts = {
+      signatureType: {
+        hexPrivateKey: this.opPrivateKey,
+        did: this.opDID
+      },
+      registration: {
+        registrationBy: {
+          type: PassBy.VALUE,
+        },
+      },
+      responseMode: ResponseMode.POST,
+      did: this.opDID,
+      expiresIn: 2000
     }
 
-    private static objectFromURI(uriDecoded: string): string {
-        return JSON.parse('{"' + uriDecoded.replace(/"/g, '\\"').replace(/&/g, '","').replace(/=/g, '":"') + '"}');
+    const verifyOpts: VerifyAuthenticationRequestOpts = {
+      verification: {
+        mode: VerificationMode.INTERNAL,
+        resolveOpts: {
+          didMethods: ["ethr"]
+        }
+      },
+      nonce: requestURI.nonce
     }
+
+    try {
+      const op = OP.fromOpts(responseOpts, verifyOpts)
+      const authResponse = await op.createAuthenticationResponse(requestURI.request)
+      const siopSessionResponse = await axios.post(requestURI.redirect_uri, authResponse)
+      if (siopSessionResponse.status == 200) {
+        return
+      } else {
+        return Promise.reject(`Error ${siopSessionResponse.status}: ${siopSessionResponse.statusText}`)
+      }
+    } catch (e) {
+      return Promise.reject(e.message)
+    }
+  }
+
+  private static objectFromURI(uriDecoded: string): AuthenticationRequestURI {
+    return JSON.parse('{"' + uriDecoded.replace(/"/g, '\\"').replace(/&/g, '","').replace(/=/g, '":"') + '"}')
+  }
 }
