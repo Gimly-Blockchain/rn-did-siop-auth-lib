@@ -1,6 +1,6 @@
 {
-  "name": "@sphereon/rn-did-auth-op-authenticator",
-  "version": "0.0.8",
+  "name": "@spostma/rn-did-auth-op-authenticator",
+  "version": "0.0.2",
   "private": false,
   "main": "dist/index.js",
   "typings": "dist/index.d.ts",
@@ -18,11 +18,10 @@
     "fix:lint": "eslint --ext .ts --fix"
   },
   "dependencies": {
-    "@sphereon/did-auth-siop": "^0.0.1-temp-sp1",
+    "@sphereon/did-auth-siop": "0.0.1-temp-sp2",
     "@tradle/react-native-http": "^2.0.0",
     "add": "^2.0.6",
     "assert": "^1.1.1",
-    "axios": "^0.21.4",
     "browserify-zlib": "^0.1.4",
     "buffer": "^4.9.1",
     "console-browserify": "^1.1.0",
