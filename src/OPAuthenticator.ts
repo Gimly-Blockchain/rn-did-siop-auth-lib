@@ -4,12 +4,12 @@ import {OP} from "@sphereon/did-auth-siop/dist/main"
 import {
   ParsedAuthenticationRequestURI,
   PassBy,
+  ResponseMode,
   VerificationMode,
   VerifiedAuthenticationRequestWithJWT,
   VerifyAuthenticationRequestOpts
 } from "@sphereon/did-auth-siop/dist/main/types/SIOP.types"
-// eslint-disable-next-line import/order
-import axios from "axios"
+import fetch from 'cross-fetch'
 
 import './shim'
 
@@ -27,6 +27,7 @@ export default class OPAuthenticator {
         .addDidMethod("ethr")
         .internalSignature(opPrivateKey, opDID, `${opDID}#controller`)
         .registrationBy(PassBy.VALUE)
+        .response(ResponseMode.POST)
         .build()
   }
 
@@ -35,12 +36,12 @@ export default class OPAuthenticator {
     const getRequestUrl = redirectUrl + "?stateId=" + state
     console.log("getRequestUrl", getRequestUrl)
     try {
-      const response = await axios.get(getRequestUrl)
+      const response = await fetch(getRequestUrl)
       console.log("response.status", response.status)
       if (response.status == 200) {
-        return this.op.parseAuthenticationRequestURI(response.data as string)
+        return this.op.parseAuthenticationRequestURI(await response.text())
       } else {
-        return Promise.reject("Could not fetch the request URL: " + response.statusText || response.data)
+        return Promise.reject("Could not fetch the request URL: " + response.statusText || await response.text())
       }
     } catch (e) {
       return Promise.reject(e.message)
@@ -75,11 +76,11 @@ export default class OPAuthenticator {
   public async sendAuthResponse(verifiedAuthenticationRequest: VerifiedAuthenticationRequestWithJWT): Promise<void> {
     try {
       const authResponse = await this.op.createAuthenticationResponseFromVerifiedRequest(verifiedAuthenticationRequest)
-      const siopSessionResponse = await axios.post(authResponse.payload.aud, authResponse)
-      if (siopSessionResponse.status == 200) {
+      const submittedResponse = await this.op.submitAuthenticationResponse(authResponse)
+      if (submittedResponse.status == 200) {
         return
       } else {
-        return Promise.reject(`Error ${siopSessionResponse.status}: ${siopSessionResponse.statusText}`)
+        return Promise.reject(`Error ${submittedResponse.status}: ${submittedResponse.statusText}`)
       }
     } catch (e) {
       return Promise.reject(e.message)
