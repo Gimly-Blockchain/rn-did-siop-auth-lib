@@ -21,7 +21,7 @@ export default class OPAuthenticator {
   private op: OP
 
 
-  constructor(opDID: string, opKID:string, opPrivateKey: string) {
+  constructor(opDID: string, opKID: string, opPrivateKey: string) {
     this.op = OP.builder()
         .withExpiresIn(6000)
         .addDidMethod("ethr")
@@ -60,7 +60,11 @@ export default class OPAuthenticator {
       nonce: requestURI.requestPayload.nonce
     }
 
-    return await this.op.verifyAuthenticationRequest(requestURI.jwt, options)
+    try {
+      return this.op.verifyAuthenticationRequest(requestURI.jwt, options)
+    } catch (e) {
+      return Promise.reject(e.message)
+    }
   }
 
   /* Format the DID presentation */
