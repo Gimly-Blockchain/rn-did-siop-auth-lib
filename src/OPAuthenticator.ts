@@ -21,11 +21,11 @@ export default class OPAuthenticator {
   private op: OP
 
 
-  constructor(opDID: string, opPrivateKey: string) {
+  constructor(opDID: string, opKID:string, opPrivateKey: string) {
     this.op = OP.builder()
         .withExpiresIn(6000)
         .addDidMethod("ethr")
-        .internalSignature(opPrivateKey, opDID, `${opDID}#controller`)
+        .internalSignature(opPrivateKey, opDID, opKID)
         .registrationBy(PassBy.VALUE)
         .response(ResponseMode.POST)
         .build()
