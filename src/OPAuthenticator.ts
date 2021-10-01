@@ -13,7 +13,7 @@ import fetch from 'cross-fetch'
 
 import './shim'
 
-import {QRCodeValues, RPDID} from "./types/types"
+import {OPAuthenticatorOptions, QRCodeValues, RPDID} from "./types/types"
 
 
 export default class OPAuthenticator {
@@ -25,11 +25,11 @@ export default class OPAuthenticator {
     this.op = op
   }
 
-  public static newInstance(opDID: string, opKID: string, opPrivateKey: string, expiresIn = 6000): OPAuthenticator {
+  public static newInstance(options: OPAuthenticatorOptions): OPAuthenticator {
     const op = OP.builder()
-        .withExpiresIn(expiresIn)
-        .addDidMethod("ethr")
-        .internalSignature(opPrivateKey, opDID, opKID)
+        .withExpiresIn(options.expiresIn)
+        .addDidMethod(options.didMethod)
+        .internalSignature(options.opPrivateKey, options.opDID, options.opKID)
         .registrationBy(PassBy.VALUE)
         .response(ResponseMode.POST)
         .build()
