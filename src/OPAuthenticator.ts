@@ -13,7 +13,7 @@ import fetch from 'cross-fetch'
 
 import './shim'
 
-import {RPPresentation} from "./types/types"
+import {QRCodeValues, RPDID} from "./types/types"
 
 
 export default class OPAuthenticator {
@@ -21,19 +21,28 @@ export default class OPAuthenticator {
   private op: OP
 
 
-  constructor(opDID: string, opKID: string, opPrivateKey: string) {
-    this.op = OP.builder()
-        .withExpiresIn(6000)
+  private constructor(op: OP) {
+    this.op = op
+  }
+
+  public static newInstance(opDID: string, opKID: string, opPrivateKey: string, expiresIn = 6000): OPAuthenticator {
+    const op = OP.builder()
+        .withExpiresIn(expiresIn)
         .addDidMethod("ethr")
         .internalSignature(opPrivateKey, opDID, opKID)
         .registrationBy(PassBy.VALUE)
         .response(ResponseMode.POST)
         .build()
+    return this.newInstanceFromOP(op)
+  }
+
+  public static newInstanceFromOP(op: OP): OPAuthenticator {
+    return new OPAuthenticator(op)
   }
 
   /* Get the authentication request URL from the RP */
-  public async getRequestUrl(redirectUrl: string, state: string): Promise<ParsedAuthenticationRequestURI> {
-    const getRequestUrl = redirectUrl + "?stateId=" + state
+  public async getAuthenticationRequestFromRP(qrCodeValues: QRCodeValues): Promise<ParsedAuthenticationRequestURI> {
+    const getRequestUrl = qrCodeValues.redirectUrl + "?stateId=" + qrCodeValues.state
     console.log("getRequestUrl", getRequestUrl)
     try {
       const response = await fetch(getRequestUrl)
@@ -43,8 +52,8 @@ export default class OPAuthenticator {
       } else {
         return Promise.reject("Could not fetch the request URL: " + response.statusText || await response.text())
       }
-    } catch (e) {
-      return Promise.reject(e.message)
+    } catch (error) {
+      return Promise.reject(error.message)
     }
   }
 
@@ -62,32 +71,34 @@ export default class OPAuthenticator {
 
     try {
       return this.op.verifyAuthenticationRequest(requestURI.jwt, options)
-    } catch (e) {
-      return Promise.reject(e.message)
+    } catch (error) {
+      console.error(error)
+      return Promise.reject(error.message)
     }
   }
 
   /* Format the DID presentation */
-  public rpPresentationFromDidResolutionResult(verifiedAuthenticationRequest: VerifiedAuthenticationRequestWithJWT): RPPresentation {
+  public rpDidFromAuthenticationRequest(verifiedAuthenticationRequest: VerifiedAuthenticationRequestWithJWT): RPDID {
     const didResolutionResult = verifiedAuthenticationRequest.didResolutionResult
-    const rpPresentation: RPPresentation = new RPPresentation()
-    rpPresentation.did = didResolutionResult.didDocument.id
-    return rpPresentation
+    const rpdid: RPDID = new RPDID()
+    rpdid.id = didResolutionResult.didDocument.id
+    rpdid.alsoKnownAs = didResolutionResult.didDocument.alsoKnownAs
+    return rpdid
   }
 
 
   /* Send the authentication response back to the RP */
-  public async sendAuthResponse(verifiedAuthenticationRequest: VerifiedAuthenticationRequestWithJWT): Promise<void> {
+  public async sendAuthResponse(verifiedAuthenticationRequest: VerifiedAuthenticationRequestWithJWT): Promise<Response> {
     try {
       const authResponse = await this.op.createAuthenticationResponseFromVerifiedRequest(verifiedAuthenticationRequest)
       const submittedResponse = await this.op.submitAuthenticationResponse(authResponse)
-      if (submittedResponse.status == 200) {
-        return
+      if (submittedResponse.status >= 200 && submittedResponse.status < 300) {
+        return submittedResponse
       } else {
-        return Promise.reject(`Error ${submittedResponse.status}: ${submittedResponse.statusText}`)
+        return Promise.reject(`Error ${submittedResponse.status}: ${submittedResponse.statusText || await submittedResponse.text()}`)
       }
-    } catch (e) {
-      return Promise.reject(e.message)
+    } catch (error) {
+      return Promise.reject(error.message)
     }
   }
 }
