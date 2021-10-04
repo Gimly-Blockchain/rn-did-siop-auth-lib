@@ -47,9 +47,10 @@ or for more fine-grained control use the OP.builder() from the SIOP library:
 see [this openid-provider-siop section](https://github.com/Sphereon-Opensource/did-auth-siop#openid-provider-siop) for details.
 
 The next step is to get an authentication request from the RP (Relying Party) endpoint. Method "getAuthenticationRequestFromRP" will the call the RP endpoint to 
-retrieve the full authentication request based on the QR code data, it assumes you have a state identifier 
-(field state) and a redirectUrl field in there. When using typescript it takes interface QRCodeValues as parameter.
-(In case the entire authentication request is encoded in the QR code this step is not necessary.)
+retrieve the full authentication request based on a state identifier which has to be part of the QR code data, 
+besides the state field state we also need a redirectUrl field to know at which endpoint we can get the authentication request. 
+When using typescript it takes interface QRCodeValues as parameter.
+  (In case the entire authentication request is encoded in the QR code this step is not necessary.)
 
 ````typescript
 this.authRequestURI = await this.opAuthenticator.getAuthenticationRequestFromRP(qrContent as QRCodeValues)
