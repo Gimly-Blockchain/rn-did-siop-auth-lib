@@ -1,6 +1,6 @@
 {
   "name": "@spostma/rn-did-auth-op-authenticator",
-  "version": "0.0.21",
+  "version": "0.0.22",
   "private": false,
   "main": "dist/index.js",
   "typings": "dist/index.d.ts",
@@ -19,6 +19,7 @@
   },
   "dependencies": {
     "@sphereon/did-auth-siop": "0.0.1-temp-sp2",
+    "@spostma/did-auth-siop": "0.1.12",
     "@tradle/react-native-http": "^2.0.0",
     "assert": "^1.1.1",
     "browserify-zlib": "~0.1.4",
