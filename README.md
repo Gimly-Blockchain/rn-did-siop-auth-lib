@@ -5,7 +5,7 @@
   <br>
 </h1>
 
-This library module contains an OP (OpenID Provider) Authenticator implementation that can be used in React Native projects,  
+This library module contains an OP (OpenID Provider) Authenticator implementation that can be used in React Native projects,
 it's basically a React Native wrapper around the ["Sphereon Self Issued OpenID Provider v2 (SIOP)" library](https://github.com/Sphereon-Opensource/did-auth-siop) 
 reducing the implementation effort and troubleshooting involved with getting the SIOP library to work in a React Native environment. 
 
@@ -49,9 +49,8 @@ see [this openid-provider-siop section](https://github.com/Sphereon-Opensource/d
 The next step is to get an authentication request from the RP (Relying Party) endpoint. Method "getAuthenticationRequestFromRP" will the call the RP endpoint to 
 retrieve the full authentication request based on a state identifier which has to be part of the QR code data, 
 besides the state field state we also need a redirectUrl field to know at which endpoint we can get the authentication request. 
-When using typescript it takes interface QRCodeValues as parameter.
-  (In case the entire authentication request is encoded in the QR code this step is not necessary.)
-
+When using typescript it takes interface QRCodeValues as parameter.  
+(In case the entire authentication request is encoded in the QR code this step is not necessary.)  
 ````typescript
 this.authRequestURI = await this.opAuthenticator.getAuthenticationRequestFromRP(qrContent as QRCodeValues)
 ````
