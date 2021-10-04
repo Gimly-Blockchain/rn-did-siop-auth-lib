@@ -1,46 +1,92 @@
-# Getting Started with Create React App
+<h1 align="center">
+  <br>
+  <a href="https://www.gimly.io/"><img src="https://avatars.githubusercontent.com/u/64525639?s=200&v=4" alt="Gimly" width="180"></a>
+  <br>DID SIOP auth component library for react-native 
+  <br>
+</h1>
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+This library module contains an OP (OpenID Provider) Authenticator implementation that can be used in React Native projects,
+it's basically a React Native wrapper around the ["Sphereon Self Issued OpenID Provider v2 (SIOP)" library](https://github.com/Sphereon-Opensource/did-auth-siop) 
+reducing the implementation effort and troubleshooting involved with getting the SIOP library to work in a React Native environment. 
 
-## Available Scripts
+Demo project [rn-did-siop-example-app](https://github.com/Sphereon-OpenSource/rn-did-siop-example-app) implements this library.
 
-In the project directory, you can run:
+### To build
 
-### `yarn start`
+- yarn install
+- yarn build
+- yarn publish (in case you want to publish the project to a private registry.)
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
+### Usage
+To use this helper library you need to implement the following:
+First you create a new instance of OPAuthenticator. There are two static methods with different parameters:
+```typescript
+this.opAuthenticator = OPAuthenticator.newInstance(options)
+```
+Use this method for simplified instantiation with only the most common parameters.
 
-The page will reload if you make edits.\
-You will also see any lint errors in the console.
+````typescript
+opDID: string
+opKID: string
+opPrivateKey: string
+expiresIn: number // (optional, default is 6000ms) 
+didMethod: string  // optional, IE. "ethr", "eosio". By default it is taken from the authentication requests did_methods_supported
+````
+When using typescript these fields are contained in class OPAuthenticatorOptions. 
 
-### `yarn test`
+or for more fine-grained control use the OP.builder() from the SIOP library:
+````typescript
+    this.opAuthenticator = OPAuthenticator.newInstanceFromOP(OP.builder()
+        .withExpiresIn(expiresIn)
+        .addDidMethod("ethr")
+        .internalSignature(opPrivateKey, opDID, opKID)
+        .registrationBy(PassBy.VALUE)
+        .response(ResponseMode.POST)
+        .build())
+````
+see [this openid-provider-siop section](https://github.com/Sphereon-Opensource/did-auth-siop#openid-provider-siop) for details.
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+The next step is to get an authentication request from the RP (Relying Party) endpoint. Method "getAuthenticationRequestFromRP" will the call the RP endpoint to 
+retrieve the full authentication request based on a state identifier which has to be part of the QR code data, 
+besides the state field state we also need a redirectUrl field to know at which endpoint we can get the authentication request. 
+When using typescript it takes interface QRCodeValues as parameter.  
+(In case the entire authentication request is encoded in the QR code this step is not necessary.)  
+````typescript
+this.authRequestURI = await this.opAuthenticator.getAuthenticationRequestFromRP(qrContent as QRCodeValues)
+````
+getAuthenticationRequestFromRP will return (when using typescript) and object for interface ParsedAuthenticationRequestURI. This is the input parameter for then next step:
 
-### `yarn build`
+````typescript
+this.verifiedAuthenticationRequest = await this.opAuthenticator.verifyAuthenticationRequestURI(this.authRequestURI)
+````
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+When verifyAuthenticationRequestURI method, the verification of authenticity of the request send by the RP succeeds, 
+it will return an object for interface VerifiedAuthenticationRequestWithJWT.
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+Next there a helper method the extract DID information from the request, but this can also be done from within the VerifiedAuthenticationRequestWithJWT interface.
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+````typescript
+const rpDid = this.opAuthenticator.rpDidFromAuthenticationRequest(this.verifiedAuthenticationRequest)
+````
+rpDidFromAuthenticationRequest will return class RPDID containing DID information
 
-### `yarn eject`
+````typescript
+export declare class RPDID {
+  id: string;
+  alsoKnownAs?: string[];
+}
+````
 
-**Note: this is a one-way operation. Once you `eject`, you can’t go back!**
-
-If you aren’t satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
-
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you’re on your own.
-
-You don’t have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn’t feel obligated to use this feature. However we understand that this tool wouldn’t be useful if you couldn’t customize it when you are ready for it.
-
-## Learn More
-
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
-
-To learn React, check out the [React documentation](https://reactjs.org/).
+At this point the idea is that you present the DID information and ask the user for permission to send your DID back to the RP by using either a button or biometrics dialog.
+When the user approves you can call the final method "sendAuthResponse" which will send the requested (and signed) OP did information back to the RP callback endpoint:
+````typescript
+ try {
+  await this.opAuthenticator.sendAuthResponse(this.verifiedAuthenticationRequest as VerifiedAuthenticationRequestWithJWT)
+  this.setState({message: "Login successful"})
+} catch (e) {
+  this.setState({message: "Error: " + e.message})
+} finally {
+  ...
+}
+````
+(Except for rpDidFromAuthenticationRequest all methods will return a promise. Errors are raised using Promise.reject())
