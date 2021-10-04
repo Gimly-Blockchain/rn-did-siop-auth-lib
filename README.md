@@ -30,7 +30,7 @@ opDID: string
 opKID: string
 opPrivateKey: string
 expiresIn: number // (optional, default is 6000ms) 
-didMethod: string  // optional, IE. "ethr", "eosio". By default it is fetched from the authentication requests did_methods_supported
+didMethod: string  // optional, IE. "ethr", "eosio". By default it is taken from the authentication requests did_methods_supported
 ````
 When using typescript these fields are contained in class OPAuthenticatorOptions. 
 
