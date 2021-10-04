@@ -27,8 +27,8 @@ export default class OPAuthenticator {
 
   public static newInstance(options: OPAuthenticatorOptions): OPAuthenticator {
     const op = OP.builder()
-        .withExpiresIn(options.expiresIn)
-        .addDidMethod(options.didMethod)
+        .withExpiresIn(options.expiresIn || 6000)
+        .addDidMethod(options.didMethod as string || "ethr")
         .internalSignature(options.opPrivateKey, options.opDID, options.opKID)
         .registrationBy(PassBy.VALUE)
         .response(ResponseMode.POST)
@@ -40,13 +40,18 @@ export default class OPAuthenticator {
     return new OPAuthenticator(op)
   }
 
+
   /* Get the authentication request URL from the RP */
   public async getAuthenticationRequestFromRP(qrCodeValues: QRCodeValues): Promise<ParsedAuthenticationRequestURI> {
     const getRequestUrl = qrCodeValues.redirectUrl + "?stateId=" + qrCodeValues.state
-    console.log("getRequestUrl", getRequestUrl)
+    if ("development" === process.env.NODE_ENV) {
+      console.log("getRequestUrl", getRequestUrl)
+    }
     try {
       const response = await fetch(getRequestUrl)
-      console.log("response.status", response.status)
+      if ("development" === process.env.NODE_ENV) {
+        console.log("response.status", response.status)
+      }
       if (response.status == 200) {
         return this.op.parseAuthenticationRequestURI(await response.text())
       } else {
@@ -57,13 +62,33 @@ export default class OPAuthenticator {
     }
   }
 
+
   /* Verify the integrity of the authentication request */
-  public async verifyAuthenticationRequestURI(requestURI: ParsedAuthenticationRequestURI): Promise<VerifiedAuthenticationRequestWithJWT> {
+  public async verifyAuthenticationRequestURI(requestURI: ParsedAuthenticationRequestURI, didMethod: string = null): Promise<VerifiedAuthenticationRequestWithJWT> {
+    const didMethodsSupported = requestURI.registration.did_methods_supported as string[]
+    if (!didMethodsSupported) {
+      return Promise.reject(`A value for did_methods_supported is missing from the Authentication Request URI`)
+    }
+
+    let didMethods: string[]
+    if (didMethodsSupported && didMethodsSupported.length) { // format did:ethr:
+      didMethods = didMethodsSupported.map(value => {
+        return value.split(":")[1]
+      })
+    } else if (didMethod != null) {
+      didMethods = []
+      if (didMethodsSupported.indexOf(`did:${didMethod}:`) > -1) {
+        didMethods.push(didMethod)
+      } else {
+        return Promise.reject(`didMethod ${didMethod} is not among the supported didMethods ${didMethodsSupported}`)
+      }
+    }
+
     const options: VerifyAuthenticationRequestOpts = {
       verification: {
         mode: VerificationMode.INTERNAL,
         resolveOpts: {
-          didMethods: ["ethr"]
+          didMethods: didMethods
         }
       },
       nonce: requestURI.requestPayload.nonce
@@ -77,13 +102,14 @@ export default class OPAuthenticator {
     }
   }
 
+
   /* Format the DID presentation */
   public rpDidFromAuthenticationRequest(verifiedAuthenticationRequest: VerifiedAuthenticationRequestWithJWT): RPDID {
     const didResolutionResult = verifiedAuthenticationRequest.didResolutionResult
-    const rpdid: RPDID = new RPDID()
-    rpdid.id = didResolutionResult.didDocument.id
-    rpdid.alsoKnownAs = didResolutionResult.didDocument.alsoKnownAs
-    return rpdid
+    const rpDid: RPDID = new RPDID()
+    rpDid.id = didResolutionResult.didDocument.id
+    rpDid.alsoKnownAs = didResolutionResult.didDocument.alsoKnownAs
+    return rpDid
   }
 
 

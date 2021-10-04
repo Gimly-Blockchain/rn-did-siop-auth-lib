@@ -2,8 +2,8 @@ export class OPAuthenticatorOptions {
   opDID: string
   opKID: string
   opPrivateKey: string
-  expiresIn = 6000
-  didMethod = "ethr"
+  expiresIn?
+  didMethod?
 }
 
 
