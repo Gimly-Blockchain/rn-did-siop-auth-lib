@@ -1,13 +1,13 @@
 {
   "name": "@spostma/rn-did-auth-op-authenticator",
-  "version": "0.0.25",
+  "version": "0.0.26",
   "private": false,
   "main": "dist/index.js",
   "typings": "dist/index.d.ts",
   "license": "Apache-2.0",
   "author": "Sphereon",
   "scripts": {
-    "build": "rn-nodeify --hack --install && tsc -p tsconfig.json",
+    "build": "rn-nodeify --hack --install \"crypto,stream\"  && tsc -p tsconfig.json",
     "test": "run-s build test:* cov",
     "test:lint": "eslint . --ext .ts",
     "test:prettier": "prettier \"{src, test}/**/*.(ts|tsx)\" --list-different",
@@ -18,7 +18,7 @@
     "fix:lint": "eslint --ext .ts --fix"
   },
   "dependencies": {
-    "@spostma/did-auth-siop": "0.1.13",
+    "@spostma/did-auth-siop": "0.1.14",
     "@tradle/react-native-http": "^2.0.0",
     "assert": "^1.1.1",
     "browserify-zlib": "~0.1.4",
