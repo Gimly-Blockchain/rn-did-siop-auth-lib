@@ -1,6 +1,6 @@
 {
   "name": "@spostma/rn-did-auth-op-authenticator",
-  "version": "0.0.23",
+  "version": "0.0.24",
   "private": false,
   "main": "dist/index.js",
   "typings": "dist/index.d.ts",
@@ -18,7 +18,7 @@
     "fix:lint": "eslint --ext .ts --fix"
   },
   "dependencies": {
-    "@spostma/did-auth-siop": "0.1.12",
+    "@spostma/did-auth-siop": "0.1.13",
     "@tradle/react-native-http": "^2.0.0",
     "assert": "^1.1.1",
     "browserify-zlib": "~0.1.4",
