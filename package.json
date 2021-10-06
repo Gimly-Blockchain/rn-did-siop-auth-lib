@@ -1,6 +1,6 @@
 {
   "name": "@gimly-blockchain/rn-did-auth-siop-authenticator",
-  "version": "0.1.0",
+  "version": "0.1.1-UNSTABLE",
   "private": false,
   "main": "dist/index.js",
   "typings": "dist/index.d.ts",
