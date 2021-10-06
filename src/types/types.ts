@@ -1,4 +1,4 @@
-import {VerifiablePresentation} from '@sphereon/pe-js'
+import { VerifiablePresentationResponseOpts } from '@sphereon/did-auth-siop/dist/main/types/SIOP.types'
 
 export class OPAuthenticatorOptions {
   opDID: string
@@ -8,13 +8,11 @@ export class OPAuthenticatorOptions {
   didMethod?
 }
 
-
-export class AuthRequestDetails {
+export interface AuthRequestDetails {
   id: string
   alsoKnownAs?: string[]
-  verifiablePresentation: VerifiablePresentation
+  vpResponseOpts: VerifiablePresentationResponseOpts[]
 }
-
 
 export interface QRCodeValues {
   state: string

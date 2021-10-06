@@ -6,16 +6,23 @@
 </h1>
 
 This library module contains an OP (OpenID Provider) Authenticator implementation that can be used in React Native projects,
-it's basically a React Native wrapper around the ["Sphereon Self Issued OpenID Provider v2 (SIOP)" library](https://github.com/Sphereon-Opensource/did-auth-siop) 
+it's basically a React Native wrapper around the ["Self Issued OpenID Provider v2 (SIOP)" library](https://github.com/Sphereon-Opensource/did-auth-siop) 
 reducing the implementation effort and troubleshooting involved with getting the SIOP library to work in a React Native environment. 
 
 Demo project [rn-did-siop-example-app](https://github.com/Sphereon-OpenSource/rn-did-siop-example-app) implements this library.
 
 ### To build
 
+#### If React Native tools are not installed
+
+````
+yarn global add react-native-cli
+yarn global add rn-nodeify
+````
+
+#### Build
 - yarn install
 - yarn build
-- yarn publish (in case you want to publish the project to a private registry.)
 
 ### Usage
 To use this helper library you need to implement the following:
