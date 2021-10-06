@@ -1,3 +1,5 @@
+import {VerifiablePresentation} from '@sphereon/pe-js'
+
 export class OPAuthenticatorOptions {
   opDID: string
   opKID: string
@@ -7,9 +9,10 @@ export class OPAuthenticatorOptions {
 }
 
 
-export class RPDID {
+export class AuthRequestDetails {
   id: string
   alsoKnownAs?: string[]
+  verifiablePresentation: VerifiablePresentation
 }
 
 
