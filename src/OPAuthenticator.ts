@@ -114,14 +114,18 @@ export default class OPAuthenticator {
       verifiablePresentations = await Promise.all(
         presentationDefs.map(async (presentationDef) => {
           const checked = await pex.selectVerifiableCredentialsForSubmission(presentationDef.definition)
-          if (checked.errors) {
-            console.error(`checked failed for presentation: ${JSON.stringify(presentationDef.definition)}`)
+          if (checked.errors && checked.errors.length > 0) {
+            console.error(`checked contained errors for presentation: ${JSON.stringify(presentationDef.definition)}`)
+            console.error(`errors: ${JSON.stringify(checked.errors)}`)
             throw new Error(JSON.stringify(checked.errors))
           }
 
           const matches: SubmissionRequirementMatch[] = checked.matches
-          if (matches) {
+          if (matches && matches.length > 0) {
             console.log(`matches: ${JSON.stringify(checked.matches)}`)
+          } else {
+            console.error(`No matches against definition for presentation: ${JSON.stringify(presentationDef.definition)}`)
+            throw new Error(JSON.stringify(checked.errors))
           }
 
           const vp = await pex.submissionFrom(presentationDef.definition, verifiableCredentials)

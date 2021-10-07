@@ -1,11 +1,12 @@
 {
   "name": "@gimly-blockchain/rn-did-auth-siop-authenticator",
-  "version": "0.1.1-UNSTABLE",
+  "version": "0.1.1",
   "private": false,
   "main": "dist/index.js",
   "typings": "dist/index.d.ts",
   "license": "Apache-2.0",
-  "author": "Sphereon",
+  "author": "Sphereon <dev@sphereon.com>",
+  "keywords": ["SSI", "OpenID", "SIOP", "Authentication", "Verifiable Credentials"],
   "scripts": {
     "build": "rn-nodeify --hack --install \"crypto,stream\"  && tsc -p tsconfig.json",
     "test": "run-s build test:* cov",
